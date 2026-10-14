@@ -6,23 +6,40 @@ import 'package:path/path.dart' as p;
 Future<void> main(List<String> arguments) async {
   final dataPath = p.join(Directory.current.path, 'data', 'books.json');
 
-  final books = await loadBooks(dataPath);
+  try {
+    final books = await loadBooks(dataPath);
 
-  print('=== 图书统计 ===');
-  print('总数: ${books.length}');
+    print('=== 图书统计 ===');
+    print('总数: ${books.length}');
 
-  final categoryCount = <String, int>{};
-  for (final b in books) {
-    categoryCount[b.category] = (categoryCount[b.category] ?? 0) + 1;
-  }
-  print('\n各类目数量:');
-  categoryCount.forEach((cat, count) => print('  $cat: $count'));
+    final categoryCount = <String, int>{};
+    for (final b in books) {
+      categoryCount[b.category] = (categoryCount[b.category] ?? 0) + 1;
+    }
+    print('\n各类目数量:');
+    categoryCount.forEach((cat, count) => print('  $cat: $count'));
 
-  final sorted = [...books]
-    ..sort((a, b) => b.borrowCount.compareTo(a.borrowCount));
-  print('\n借阅量 Top3:');
-  for (var i = 0; i < sorted.length && i < 3; i++) {
-    final b = sorted[i];
-    print('  ${i + 1}. 《${b.title}》- 借阅 ${b.borrowCount} 次');
+    final sorted = [...books]
+      ..sort((a, b) => b.borrowCount.compareTo(a.borrowCount));
+    print('\n借阅量 Top3:');
+    for (var i = 0; i < sorted.length && i < 3; i++) {
+      final b = sorted[i];
+      print('  ${i + 1}. 《${b.title}》- 借阅 ${b.borrowCount} 次');
+    }
+
+    if (books.isNotEmpty) {
+      final first = books.first;
+      final roundtrip = Book.fromJson(first.toJson());
+      final ok =
+          roundtrip.id == first.id &&
+          roundtrip.title == first.title &&
+          roundtrip.category == first.category &&
+          roundtrip.borrowCount == first.borrowCount;
+      print('\nroundtrip 验证: ${ok ? "通过" : "失败"}');
+    }
+  } on FileSystemException {
+    print('数据文件缺失，请检查data/books.json');
+  } catch (e) {
+    print('未知错误: $e');
   }
 }
